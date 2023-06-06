@@ -1,1 +1,243 @@
 # SQL_review
+
+觀念
+Database(資料庫) -> Table(表格) -> Value(值)
+
+創建資料庫
+CREATE DATABASE `資料庫名`;
+SHOW DATABASES;
+DROP DATABASE `資料庫名`;
+DROP TABLE `表格名`;  
+CREATE DATABASE `資料庫名`;
+USE `資料庫名1`;
+
+創建表格
+USE `資料庫名`;
+CREATE TABLE `表格名`(
+    `col_1` 屬性 (可加限制 UNIQUE、NOT NULL...), 
+    `col_2` 屬性,
+    `col_3` 屬性,
+    PRIMARY KEY(`col_1`, `col_2`, ...)
+); 
+
+例子 : 
+USE `database_1`;
+CREATE TABLE `employee`(
+    `emp_id` INT, 
+    `name` VARCHAR(20),
+    `birth_date` DATE,
+    `sex` VARCHAR(1),
+    `salary` INT,
+    `branch_id` INT,
+    `sup_id` INT,
+    PRIMARY KEY(`emp_id`)
+); 
+
+CREATE TABLE `branch`(
+    `branch_id` INT,
+    `branch_name` VARCHAR(20),
+    `manager_id` INT,
+    PRIMARY KEY (`emp_id`),
+    FOREIGN KEY `branch`(`manager_id`) REFERENCES `employee`(`emp_id`) ON DELETE SET NULL
+);
+
+PRIMARY KEY 與 FOREIGN KEY
+PRIMARY KEY(`col_1`, `col_2`, ...)
+FOREIGN KEY 當前TABLE名(`當前TABLE的col`) REFERENCES `TABLE名`(`col`) ON DELETE SET NULL 或是 ON DELETE CASCADE
+
+限制與約束
+## 放在TABLE 裡面的屬性之後 {UNIQUE、NOT NULL、DEFAULT `歷史`、AUTO_INCREMENT}
+DESCRIBE `表格名`; ##呈現出各個col的型態，外鑑、主鑑 ##FOCUS ON COL
+SELECT * FROM `表格名`; ##呈現出此表格所有col的value ##FOCUS ON ROW
+DROP TABLE `表格名`;
+更改TABLE的col : 
+ALTER TABLE `表格名` ADD col 屬性;
+ALTER TABLE `表格名` DROP COLUMN col;
+後續補 FOREIGN KEY :
+ALTER TABLE `表格名` ADD FOREIGN KEY(`col`) REFERENCES `TABLE名`(`col`) ON DELETE SET NULL;
+
+
+
+DESCRIBE `employee`;
+DROP TABLE `employee`;
+
+ALTER TABLE `employee` ADD gpa DECIMAL(3,2);
+ALTER TABLE `employee` DROP COLUMN gpa;
+
+
+儲存資料(感覺是重點)
+INSERT INTO `表格名` (COL1, COL2, COL3...)VALUES(..., ..., ..., ...);
+
+例子 : 
+INSERT INTO `employee` VALUES(206, '小黃', '1998', 'F', 50000, 1, NULL);
+INSERT INTO `employee` VALUES(207, '小綠', '1985', 'M', 29000, 2, 206);
+INSERT INTO `employee` VALUES(208, '小黑', '2000', 'M', 35000, 3, 206);
+INSERT INTO `employee` VALUES(209, '小白', '1997', 'F', 39000, 3, 207);
+INSERT INTO `employee` VALUES(210, '小蘭', '1925', 'F', 84000, 1, 207);
+SELECT * FROM `表格名`; ## 把employee表格裡的資料都列出來看看，後續可加條件
+
+修改與刪除資料
+SET SQL_SAFE_UPDATES = 0;
+UPDATE `表格名` SET `col`...WHERE `col`...;  (則... <- 若...)
+DELETE FROM `表格名` WHERE `col`...
+
+例子 : 
+CREATE TABLE `branch`(
+    `branch_id` INT PRIMARY KEY,
+    `branch_name` VARCHAR(20),
+    `manager_id` INT,
+    FOREIGN KEY (`manager_id`) REFERENCES `employee`(`emp_id`) ON DELETE SET NULL
+);
+INSERT INTO `branch` VALUES(1, '研發', NULL);
+INSERT INTO `branch` VALUES(2, '行政', NULL);
+INSERT INTO `branch` VALUES(3, '資訊', NULL);
+SELECT * FROM `branch`;
+
+UPDATE `branch`
+SET `manager_id` = 206 ## 逗號
+WHERE `branch_id` = 1; ## 也可不用寫WHERE ## and or > < = <>......
+DELETE FROM `branch`
+WHERE `branch_id` = 1;
+
+取得資料、搜尋資料
+SELECT `col` FROM `表格名`;
+SELECT `col` FROM `表格名` 有關 col 之條件設定;
+
+例子 : 
+SELECT `salary` FROM `employee` ;
+SELECT * FROM `employee` order by `salary` desc;  ##asc ##可再添加屬性判斷
+SELECT * FROM `employee` limit 4;
+SELECT * FROM `employee` where `salary`<30000 or `name`='小白';
+SELECT * FROM `employee` where `name`='小白' or  `name`='小黑';
+SELECT * FROM `employee` where `name` in ('小白' ,'小黑');
+
+
+FOREIGN KEY (`manager_id`) REFERENCES `employee`(`emp_id`) ON DELETE SET NULL
+## 若 emp_id 的對應到的資料不存在 manager_id=NULL
+FOREIGN KEY (`client_id`) REFERENCES `client`(`client_id`) ON DELETE CASCADE
+## 若 emp_id 的對應到的資料不存在，則 emp_id 整句刪掉
+## PRIMARY KEY 不能設定為 NULL
+
+取得員工、客戶所有資料
+SELECT * FROM `employee`;
+SELECT * FROM `client`;
+
+按薪水高低取得員工資料
+SELECT * FROM `employee` ORDER BY `salary`;
+
+取薪水前3高的員工資料
+SELECT * FROM `employee` ORDER BY `salary` DESC
+LIMIT 3;
+取得所有員工名字
+SELECT `name` FROM `employee`;
+
+取得所有員工性別(不重複)
+SELECT DISTINCT `sex` FROM `employee`;
+
+聚合函數 aggregate function
+-- 取得員工人數 --
+SELECT COUNT(*) FROM `employee`;
+SELECT COUNT(`sup_id`) FROM `employee`;
+
+-- 取得1970-01-01出生後的女員工人數 --
+SELECT COUNT(*) FROM `employee` WHERE `birth_date` > '1970-01-01' AND `sex`='F'; ##要記得打引號
+
+-- 取得所有員工平均薪水 --
+SELECT AVG(`salary`) FROM `employee`;
+
+-- 取得所有員工薪水總和 --
+SELECT SUM(`salary`) FROM `employee`;
+SELECT MAX(`salary`) FROM `employee`;
+SELECT MIN(`salary`) FROM `employee`;
+
+wildcards萬用字元 %代表多字元 ， _代表單一字元
+-- 電話號碼末3碼是否為335 --
+SELECT * FROM `client` WHERE `phone` LIKE '%335';
+SELECT * FROM `client` WHERE `phone` LIKE '%354%';
+
+-- 取得姓艾的客戶 --
+SELECT * FROM `client` WHERE `client_name` LIKE '艾%';
+
+-- 取得生日在12月的員工 --
+SELECT * FROM `employee` WHERE `birth_date` LIKE '_____12%';
+
+聯集 union (不同表格之間的聯集)
+-- 員工名字 union 客戶名字 --
+SELECT `name` FROM `employee`
+UNION
+SELECT `client_name` FROM `client`; ##union可繼續聯集 且 形態要一樣
+
+-- 員工id + 員工名字 union 客戶id + 客戶名字 --
+SELECT `emp_id` AS `total_id`,`name` AS `total_name` FROM `employee`
+union
+SELECT `client_id`,`client_name` FROM `client`;
+
+-- 員工薪水 union 銷售金額 --
+SELECT `salary` AS `total_money` FROM `employee`
+union 
+SELECT `total_sales` FROM `works_with`;
+
+-- join 連接 --(2個 TABLE 水平合併)
+SELECT * FROM `表格1` JOIN `表格2` ON `表格1`.`col` = `表格2`.`col`;
+INSERT INTO `branch` VALUES(4, '偷懶', NULL);
+
+-- 取得所有部門經理的名字 --
+SELECT `employee`.`emp_id`, `employee`.`name`, `branch`.`branch_name`
+FROM `employee` LEFT JOIN `branch` 
+ON `employee`.`emp_id` = `branch`.`manager_id`;
+
+SELECT `employee`.`emp_id`, `employee`.`name`, `branch`.`branch_name`
+FROM `employee` JOIN `branch`
+ON `employee`.`emp_id` = `branch`.`manager_id`;
+
+SELECT `employee`.`emp_id`, `employee`.`name`, `branch`.`branch_name`
+FROM `employee` RIGHT JOIN `branch`
+ON `employee`.`emp_id` = `branch`.`manager_id`;
+
+
+-- subquery 子查詢 --
+-- 找出研發部門的經理名字 --
+SELECT `name`
+FROM `employee`
+WHERE `emp_id`= (
+	SELECT `manager_id`
+	FROM `branch`
+	WHERE `branch_name` = '研發'
+);
+
+-- 找出對單一位客戶銷售金額超過50000的員工名字 --
+SELECT `name`
+FROM `employee`
+WHERE `emp_id` IN(
+	SELECT `emp_id`
+    FROM `works_with`
+    WHERE `total_sales` > 50000
+);
+
+
+-- on delete -- (FOREIGN KEY 若後面的col_val刪除了，則前面的col_val設定為NULL 或是 整 row 刪除)
+## 若 emp_id 的對應到的資料不存在 manager_id=NULL
+## 若 emp_id 的對應到的資料不存在，則 emp_id 整句刪掉
+## PRIMARY KEY 不能設定為 NULL
+## DELETE FROM `employee` WHERE `emp_id` = 207;
+## select * from `branch`;
+## select * from `work_with`;
+SET SQL_SAFE_UPDATES = 0;
+
+CREATE TABLE `branch`(
+    `branch_id` INT PRIMARY KEY,
+    `branch_name` VARCHAR(20),
+    `manager_id` INT,
+    FOREIGN KEY (`manager_id`) REFERENCES `employee`(`emp_id`) ON DELETE SET NULL
+);
+
+CREATE TABLE `works_with`(
+    `emp_id` INT,
+    `client_id` INT,
+    `total_sales` INT,
+    PRIMARY KEY(`emp_id`, `client_id`),
+    FOREIGN KEY (`emp_id`) REFERENCES `employee`(`emp_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`client_id`) REFERENCES `client`(`client_id`) ON DELETE CASCADE
+);
+
+
